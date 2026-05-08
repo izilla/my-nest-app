@@ -4,10 +4,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CatsModule } from './cats/cats.module';
 import configuration from './config/configuration';
+import { PostsService } from './posts/posts.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { UsersService } from './users/users.service';
 
 @Module({
-  imports: [ConfigModule.forRoot({ load: [configuration], cache: true }), CatsModule],
+  imports: [PrismaModule, ConfigModule.forRoot({ load: [configuration], cache: true }), CatsModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, UsersService, PostsService],
 })
 export class AppModule {}
