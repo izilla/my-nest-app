@@ -17,15 +17,20 @@ const mockPost: Post = {
   content: 'This is a test',
   published: false,
   authorId: 1,
+  deletedAt: null,
 };
 
-type MockPrismaService = Omit<Partial<PrismaService>, 'post'> & {
+type MockPrismaService = {
   post: {
     findUnique: jest.MockedFunction<PrismaService['post']['findUnique']>;
     findMany: jest.MockedFunction<PrismaService['post']['findMany']>;
     create: jest.MockedFunction<PrismaService['post']['create']>;
     update: jest.MockedFunction<PrismaService['post']['update']>;
-    delete: jest.MockedFunction<PrismaService['post']['delete']>;
+  };
+  client: {
+    post: {
+      delete: jest.MockedFunction<PrismaService['post']['delete']>;
+    };
   };
 };
 
@@ -35,7 +40,11 @@ const prismaMock: MockPrismaService = {
     findMany: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn(),
+  },
+  client: {
+    post: {
+      delete: jest.fn(),
+    },
   },
 };
 
@@ -84,7 +93,7 @@ describe('PostsService', () => {
 
   it('should create a post', async () => {
     const payload: PostUncheckedCreateInput = { title: 'New post', content: 'Hello', published: true, authorId: 1 };
-    prismaMock.post.create.mockResolvedValue({ ...mockPost, ...payload });
+    prismaMock.post.create.mockResolvedValue({ ...mockPost, ...payload } as Post);
 
     const result = await service.createPost(payload);
 
@@ -103,11 +112,11 @@ describe('PostsService', () => {
   });
 
   it('should delete a post', async () => {
-    prismaMock.post.delete.mockResolvedValue(mockPost);
+    prismaMock.client.post.delete.mockResolvedValue(mockPost);
 
     const result = await service.deletePost({ id: 1 });
 
     expect(result).toEqual(mockPost);
-    expect(prismaMock.post.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(prismaMock.client.post.delete).toHaveBeenCalledWith({ id: 1 });
   });
 });

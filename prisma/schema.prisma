@@ -13,18 +13,38 @@ datasource db {
   provider = "mysql"
 }
 
+model Tenant {
+  id           Int           @id @default(autoincrement())
+  name         String
+  slug         String        @unique
+  users        User[]
+  tenantAdmins TenantAdmin[]
+  deletedAt    DateTime?
+}
+
+model TenantAdmin {
+  id        Int       @id @default(autoincrement())
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  tenantId  Int
+  deletedAt DateTime?
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  name      String?
+  posts     Post[]
+  tenant    Tenant?   @relation(fields: [tenantId], references: [id])
+  tenantId  Int?
+  deletedAt DateTime?
 }
 
 model Post {
-  id        Int     @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   title     String
   content   String?
-  published Boolean @default(false)
-  author    User?   @relation(fields: [authorId], references: [id])
+  published Boolean   @default(false)
+  author    User?     @relation(fields: [authorId], references: [id])
   authorId  Int?
+  deletedAt DateTime?
 }

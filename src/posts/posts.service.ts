@@ -50,8 +50,9 @@ export class PostsService {
   }
 
   async deletePost(where: PostWhereUniqueInput): Promise<Post> {
-    return this.prisma.post.delete({
-      where,
-    });
+    const deletedPost = (await this.prisma.client.post.delete({
+      ...where,
+    })) as Post;
+    return deletedPost;
   }
 }

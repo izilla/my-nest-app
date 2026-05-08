@@ -4,9 +4,11 @@ import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { CatsModule } from '../src/cats/cats.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('CatsController (e2e)', () => {
   let app: INestApplication<App>;
+  let prisma: PrismaService;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -14,6 +16,7 @@ describe('CatsController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    prisma = moduleFixture.get<PrismaService>(PrismaService);
     await app.init();
   });
 
@@ -61,6 +64,7 @@ describe('CatsController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await prisma.$disconnect();
     await app.close();
   });
 });
