@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TenantController } from './tenant.controller';
-import { TenantService } from './tenant.service';
+import { TenantsController } from './tenants.controller';
+import { TenantsService } from './tenants.service';
 
-describe('TenantController', () => {
-  let controller: TenantController;
+describe('TenantsController', () => {
+  let controller: TenantsController;
 
   beforeEach(async () => {
     const mockTenantService = {
@@ -11,16 +11,16 @@ describe('TenantController', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [TenantController],
+      controllers: [TenantsController],
       providers: [
         {
-          provide: TenantService,
+          provide: TenantsService,
           useValue: mockTenantService,
         },
       ],
     }).compile();
 
-    controller = module.get<TenantController>(TenantController);
+    controller = module.get<TenantsController>(TenantsController);
   });
 
   it('should be defined', () => {

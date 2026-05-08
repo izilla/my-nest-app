@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: <explanation> */
+/** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: specs are long */
 import { Test, type TestingModule } from '@nestjs/testing';
 
 jest.mock('../prisma/prisma.service', () => {
@@ -22,28 +22,28 @@ const mockPost: Post = {
 
 type MockPrismaService = {
   post: {
-    findUnique: jest.MockedFunction<PrismaService['post']['findUnique']>;
-    findMany: jest.MockedFunction<PrismaService['post']['findMany']>;
     create: jest.MockedFunction<PrismaService['post']['create']>;
     update: jest.MockedFunction<PrismaService['post']['update']>;
   };
   client: {
     post: {
-      delete: jest.MockedFunction<PrismaService['post']['delete']>;
+      findUnique: jest.MockedFunction<PrismaService['client']['post']['findUnique']>;
+      findMany: jest.MockedFunction<PrismaService['client']['post']['findMany']>;
+      update: jest.MockedFunction<PrismaService['client']['post']['update']>;
     };
   };
 };
 
 const prismaMock: MockPrismaService = {
   post: {
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
   },
   client: {
     post: {
-      delete: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
     },
   },
 };
@@ -68,21 +68,21 @@ describe('PostsService', () => {
   });
 
   it('should fetch a single post', async () => {
-    prismaMock.post.findUnique.mockResolvedValue(mockPost);
+    prismaMock.client.post.findUnique.mockResolvedValue(mockPost);
 
-    const result = await service.post({ id: 1 });
+    const result = await service.getPost({ id: 1 });
 
     expect(result).toEqual(mockPost);
-    expect(prismaMock.post.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(prismaMock.client.post.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
   });
 
   it('should fetch posts list', async () => {
-    prismaMock.post.findMany.mockResolvedValue([mockPost]);
+    prismaMock.client.post.findMany.mockResolvedValue([mockPost]);
 
     const result = await service.posts({ take: 10, skip: 0 });
 
     expect(result).toEqual([mockPost]);
-    expect(prismaMock.post.findMany).toHaveBeenCalledWith({
+    expect(prismaMock.client.post.findMany).toHaveBeenCalledWith({
       skip: 0,
       take: 10,
       cursor: undefined,
@@ -112,11 +112,15 @@ describe('PostsService', () => {
   });
 
   it('should delete a post', async () => {
-    prismaMock.client.post.delete.mockResolvedValue(mockPost);
+    const deletedPost = { ...mockPost, deletedAt: new Date() };
+    prismaMock.client.post.update.mockResolvedValue(deletedPost);
 
     const result = await service.deletePost({ id: 1 });
 
-    expect(result).toEqual(mockPost);
-    expect(prismaMock.client.post.delete).toHaveBeenCalledWith({ id: 1 });
+    expect(result).toEqual(deletedPost);
+    expect(prismaMock.client.post.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { deletedAt: expect.any(Date) },
+    });
   });
 });

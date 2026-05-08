@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '../generated/prisma/client';
 import {
   UserCreateInput,
@@ -14,7 +14,15 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async user(userWhereUniqueInput: UserWhereUniqueInput): Promise<User | null> {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.client.user.findUnique({
+      where: userWhereUniqueInput,
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.prisma.client.user.findUnique({
       where: userWhereUniqueInput,
     });
   }
@@ -27,7 +35,7 @@ export class UsersService {
     orderBy?: UserOrderByWithRelationInput;
   }): Promise<User[]> {
     const { skip, take, cursor, where, orderBy } = params;
-    return this.prisma.user.findMany({
+    return this.prisma.client.user.findMany({
       skip,
       take,
       cursor,
@@ -50,17 +58,35 @@ export class UsersService {
     });
   }
 
-  async deleteUser(where: UserWhereUniqueInput): Promise<User> {
+  async hardDeleteUser(where: UserWhereUniqueInput): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where,
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
+
+    const deletedUser = (await this.prisma.user.delete({
+      where,
+    })) as User;
+
+    return deletedUser;
+  }
+
+  async deleteUser(where: UserWhereUniqueInput): Promise<User> {
+    const user = await this.prisma.client.user.findUnique({
+      where,
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const deletedUser = (await this.prisma.client.user.delete({
       ...where,
     })) as User;
+
     return deletedUser;
   }
 }

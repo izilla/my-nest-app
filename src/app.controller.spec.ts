@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { CatsService } from './cats/cats.service';
 import { ConsoleLoger } from './console-logger';
 
 describe('AppController', () => {
@@ -15,7 +14,6 @@ describe('AppController', () => {
       controllers: [AppController],
       providers: [
         AppService,
-        CatsService,
         { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('MyAwesomeApp') } },
         { provide: 'Logger', useClass: ConsoleLoger },
       ],

@@ -13,8 +13,8 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PostsService {
   constructor(private prisma: PrismaService) {}
 
-  async post(postWhereUniqueInput: PostWhereUniqueInput): Promise<Post | null> {
-    return this.prisma.post.findUnique({
+  async getPost(postWhereUniqueInput: PostWhereUniqueInput): Promise<Post | null> {
+    return this.prisma.client.post.findUnique({
       where: postWhereUniqueInput,
     });
   }
@@ -27,7 +27,7 @@ export class PostsService {
     orderBy?: PostOrderByWithRelationInput;
   }): Promise<Post[]> {
     const { skip, take, cursor, where, orderBy } = params;
-    return this.prisma.post.findMany({
+    return this.prisma.client.post.findMany({
       skip,
       take,
       cursor,
@@ -50,9 +50,9 @@ export class PostsService {
   }
 
   async deletePost(where: PostWhereUniqueInput): Promise<Post> {
-    const deletedPost = (await this.prisma.client.post.delete({
-      ...where,
-    })) as Post;
-    return deletedPost;
+    return this.prisma.client.post.update({
+      where,
+      data: { deletedAt: new Date() },
+    });
   }
 }

@@ -10,7 +10,7 @@ describe('PostsController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -20,9 +20,9 @@ describe('PostsController (e2e)', () => {
     await app.init();
   });
 
-  afterEach(async () => {
-    await prisma.$disconnect();
+  afterAll(async () => {
     await app.close();
+    await prisma.$disconnect();
   });
 
   describe('/posts (GET)', () => {
@@ -79,7 +79,8 @@ describe('PostsController (e2e)', () => {
       const createdPost = await prisma.post.create({
         data: { title: 'Post to Delete', content: 'This post will be deleted.' },
       });
-      return request(app.getHttpServer())
+
+      await request(app.getHttpServer())
         .delete(`/posts/${createdPost.id}`)
         .expect(200)
         .expect(res => {
@@ -88,6 +89,8 @@ describe('PostsController (e2e)', () => {
             deletedAt: expect.any(String),
           });
         });
+
+      return request(app.getHttpServer()).get(`/posts/${createdPost.id}`).expect(404);
     });
   });
 });
