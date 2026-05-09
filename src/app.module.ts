@@ -9,9 +9,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, ConfigModule.forRoot({ load: [configuration], cache: true }), TenantsModule],
+  imports: [PrismaModule, ConfigModule.forRoot({ load: [configuration], cache: true }), TenantsModule, AuthModule],
   controllers: [AppController, UsersController, PostsController],
   providers: [AppService, UsersService, PostsService],
 })
