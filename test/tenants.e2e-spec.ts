@@ -21,16 +21,24 @@ describe('TenantsController (e2e)', () => {
     await app.init();
   });
 
-  beforeEach(async () => {
+  const clearData = async () => {
     await prisma.tenant.deleteMany().catch(() => {
       // Ignore errors if the table is already empty
     });
     await prisma.user.deleteMany().catch(() => {
       // Ignore errors if the table is already empty
     });
+    await prisma.tenantAdmin.deleteMany().catch(() => {
+      // Ignore errors if the table is already empty
+    });
+  };
+
+  afterEach(async () => {
+    await clearData();
   });
 
   afterAll(async () => {
+    await clearData();
     await app.close();
     await prisma.$disconnect();
   });
@@ -89,6 +97,28 @@ describe('TenantsController (e2e)', () => {
 
     return request(app.getHttpServer())
       .post(`/tenants/${newTenant.id}/assign-user`)
+      .send({ userId: newUser.id })
+      .expect(201)
+      .expect(res => {
+        expect(res.body).toEqual({
+          id: newTenant.id,
+          name: newTenant.name,
+          slug: newTenant.slug,
+          deletedAt: null,
+        });
+      });
+  });
+
+  it('/tenants/:id/assign-admin', async () => {
+    const newTenant = await prisma.tenant.create({
+      data: { name: 'Tenant for Admin Assignment', slug: 'TAA102' },
+    });
+    const newUser = await prisma.user.create({
+      data: { name: 'User for Admin Assignment', email: 'admin@example.com' },
+    });
+
+    return request(app.getHttpServer())
+      .post(`/tenants/${newTenant.id}/assign-admin`)
       .send({ userId: newUser.id })
       .expect(201)
       .expect(res => {

@@ -86,14 +86,14 @@ export class TenantsService {
     }
 
     // Assign user as admin to tenant
-    return this.prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        admins: {
-          connect: { id: userId },
+    return this.prisma.tenantAdmin
+      .create({
+        data: {
+          tenant: { connect: { id: tenantId } },
+          user: { connect: { id: userId } },
         },
-      },
-    });
+      })
+      .tenant();
   }
 
   async assignUserToTenant(params: { tenantId: number; userId: number }): Promise<Tenant> {

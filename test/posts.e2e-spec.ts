@@ -20,6 +20,12 @@ describe('PostsController (e2e)', () => {
     await app.init();
   });
 
+  afterEach(async () => {
+    await prisma.post.deleteMany().catch(() => {
+      // Ignore errors if the table is already empty
+    });
+  });
+
   afterAll(async () => {
     await app.close();
     await prisma.$disconnect();

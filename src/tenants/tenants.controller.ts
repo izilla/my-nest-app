@@ -65,4 +65,15 @@ export class TenantsController {
 
     return this.tenantService.assignUserToTenant({ tenantId: Number(id), userId: data.userId });
   }
+
+  @Post(':id/assign-admin')
+  async assignAdminToTenant(@Param('id') id: string, @Body() data: { userId: number }): Promise<Tenant> {
+    const tenant = await this.tenantService.tenant({ id: Number(id) });
+
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    return this.tenantService.assignAdminToTenant({ tenantId: Number(id), userId: data.userId });
+  }
 }

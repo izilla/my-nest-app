@@ -21,6 +21,7 @@
     "test:e2e:watch": "bun --env-file=.env.test jest --watch --config ./test/jest-e2e.json",
     "test:migrate": "bun --env-file=.env.test prisma migrate deploy",
     "test:reset": "bun --env-file=.env.test prisma migrate reset --force",
+    "test:generate": "bun --env-file=.env.test prisma generate",
     "prisma": "bunx --bun prisma"
   },
   "dependencies": {

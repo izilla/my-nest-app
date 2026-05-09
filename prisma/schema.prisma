@@ -26,17 +26,21 @@ model TenantAdmin {
   id        Int       @id @default(autoincrement())
   tenant    Tenant    @relation(fields: [tenantId], references: [id])
   tenantId  Int
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int       @unique
   deletedAt DateTime?
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  name      String?
-  posts     Post[]
-  tenant    Tenant?   @relation(fields: [tenantId], references: [id])
-  tenantId  Int?
-  deletedAt DateTime?
+  id            Int          @id @default(autoincrement())
+  email         String       @unique
+  name          String?
+  posts         Post[]
+  tenant        Tenant?      @relation(fields: [tenantId], references: [id])
+  tenantId      Int?
+  tenantAdmin   TenantAdmin?
+  tenantAdminId Int?
+  deletedAt     DateTime?
 }
 
 model Post {
