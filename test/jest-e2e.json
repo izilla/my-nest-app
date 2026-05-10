@@ -10,7 +10,9 @@
         "useESM": true,
         "tsconfig": {
           "module": "esnext",
-          "moduleResolution": "nodenext"
+          "moduleResolution": "node",
+          "rootDir": ".",
+          "ignoreDeprecations": "6.0"
         }
       }
     ]
