@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '../generated/prisma/client';
 import {
   UserCreateInput,
@@ -14,6 +14,9 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async user(userWhereUniqueInput: UserWhereUniqueInput): Promise<User | null> {
+    if (!userWhereUniqueInput.id) {
+      throw new BadRequestException('User id is required');
+    }
     const user = await this.prisma.client.user.findUnique({
       where: userWhereUniqueInput,
     });

@@ -15,14 +15,16 @@ export class UsersController {
   @Get(':id')
   async getUser(@Param('id') id: string): Promise<User | null> {
     const user = await this.usersService.user({ id: Number(id) });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
     return this.usersService.user({ id: Number(id) });
   }
 
   @Patch(':id')
-  async updateUser(@Param('id') id: string, @Body() userData: { email?: string; name?: string }): Promise<User> {
+  async updateUser(@Param('id') id: string, @Body() userData: Pick<Partial<User>, 'email' | 'name'>): Promise<User> {
     const user = await this.usersService.user({ id: Number(id) });
 
     if (!user) {
@@ -44,6 +46,11 @@ export class UsersController {
   @Delete()
   async deleteAllUsers(): Promise<number> {
     const users = await this.usersService.users({});
+
+    if (users.length === 0) {
+      throw new NotFoundException('No users found');
+    }
+
     return Promise.all(users.map(user => this.usersService.deleteUser({ id: user.id }))).then(
       deletedUsers => deletedUsers.length,
     );
