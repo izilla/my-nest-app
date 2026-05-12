@@ -13,6 +13,23 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  async userIncludeDeleted(userWhereUniqueInput: UserWhereUniqueInput): Promise<User | null> {
+    if (!userWhereUniqueInput.id) {
+      throw new BadRequestException('User id is required');
+    }
+    const user = await this.prisma.user.findUnique({
+      where: userWhereUniqueInput,
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.prisma.client.user.findUnique({
+      where: userWhereUniqueInput,
+    });
+  }
+
   async user(userWhereUniqueInput: UserWhereUniqueInput): Promise<User | null> {
     if (!userWhereUniqueInput.id) {
       throw new BadRequestException('User id is required');

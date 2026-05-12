@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { User } from '../generated/prisma/client';
 import { UserModel } from '../generated/prisma/models';
 import { UsersService } from './users.service';
@@ -38,7 +48,13 @@ export class UsersController {
   }
 
   @Post()
-  signupUser(@Body() userData: { email: string; name?: string }): Promise<UserModel> {
+  async signupUser(@Body() userData: { email: string; name?: string }): Promise<UserModel> {
+    const existingUser = await this.usersService.user({ email: userData.email });
+
+    if (existingUser) {
+      throw new BadRequestException('User already exists');
+    }
+
     return this.usersService.createUser(userData);
   }
 
@@ -59,7 +75,7 @@ export class UsersController {
   // TODO: Add authentication and authorization check for internal user (not to be used in production)
   @Delete(':id/hard')
   async deleteUser(@Param('id') id: string): Promise<User> {
-    const user = await this.usersService.user({ id: Number(id) });
+    const user = await this.usersService.userIncludeDeleted({ id: Number(id) });
 
     if (!user) {
       throw new NotFoundException('User not found');

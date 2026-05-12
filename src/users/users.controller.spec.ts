@@ -6,6 +6,7 @@ import { UsersService } from './users.service';
 type MockUsersServiceType = {
   users: jest.MockedFunction<UsersService['users']>;
   user: jest.MockedFunction<UsersService['user']>;
+  userIncludeDeleted: jest.MockedFunction<UsersService['userIncludeDeleted']>;
   createUser: jest.MockedFunction<UsersService['createUser']>;
   updateUser: jest.MockedFunction<UsersService['updateUser']>;
   hardDeleteUser: jest.MockedFunction<UsersService['hardDeleteUser']>;
@@ -15,6 +16,7 @@ type MockUsersServiceType = {
 const MockUsersService: MockUsersServiceType = {
   users: jest.fn(),
   user: jest.fn(),
+  userIncludeDeleted: jest.fn(),
   createUser: jest.fn(),
   updateUser: jest.fn(),
   hardDeleteUser: jest.fn(),
@@ -49,9 +51,11 @@ describe('UsersController', () => {
     controller = module.get<UsersController>(UsersController);
     MockUsersService.users.mockReset();
     MockUsersService.user.mockReset();
+    MockUsersService.userIncludeDeleted.mockReset();
     MockUsersService.createUser.mockReset();
     MockUsersService.updateUser.mockReset();
     MockUsersService.hardDeleteUser.mockReset();
+    MockUsersService.deleteUser.mockReset();
   });
 
   it('should be defined', () => {
@@ -76,10 +80,10 @@ describe('UsersController', () => {
       expect(MockUsersService.user).toHaveBeenCalledWith({ id: Number(userId) });
     });
 
-    it('should throw NotFoundException if user is null', () => {
+    it('should throw NotFoundException if user is null', async () => {
       MockUsersService.user.mockResolvedValue(null);
 
-      expect(async () => await controller.getUser('')).rejects.toThrow('User not found');
+      await expect(async () => await controller.getUser('')).rejects.toThrow('User not found');
     });
   });
 
@@ -96,15 +100,27 @@ describe('UsersController', () => {
     it('should throw NotFoundException if user is null', async () => {
       MockUsersService.user.mockResolvedValue(null);
 
-      expect(async () => await controller.updateUser('1', { name: 'Updated Name' })).rejects.toThrow('User not found');
+      await expect(async () => await controller.updateUser('1', { name: 'Updated Name' })).rejects.toThrow(
+        'User not found',
+      );
     });
   });
 
   describe('signupUser', () => {
-    it('should create a new user', () => {
-      controller.signupUser({ email: 'test@example.com', name: 'Test User' });
+    it('should create a new user', async () => {
+      MockUsersService.user.mockResolvedValue(null);
+
+      await controller.signupUser({ email: 'test@example.com', name: 'Test User' });
 
       expect(MockUsersService.createUser).toHaveBeenCalledWith({ email: 'test@example.com', name: 'Test User' });
+    });
+
+    it('should throw BadRequestException if user already exists', async () => {
+      MockUsersService.user.mockResolvedValue(mockUser);
+
+      await expect(async () => await controller.signupUser({ email: 'test@example.com' })).rejects.toThrow(
+        'User already exists',
+      );
     });
   });
 
@@ -122,25 +138,25 @@ describe('UsersController', () => {
     it('should throw NotFoundException if no users found', async () => {
       MockUsersService.users.mockResolvedValue([]);
 
-      expect(async () => await controller.deleteAllUsers()).rejects.toThrow('No users found');
+      await expect(async () => await controller.deleteAllUsers()).rejects.toThrow('No users found');
     });
   });
 
   describe('deleteUser', () => {
     it('should hard delete a user by ID', async () => {
       const userId = '1';
-      MockUsersService.user.mockResolvedValue(mockUser);
+      MockUsersService.userIncludeDeleted.mockResolvedValue(mockUser);
 
       await controller.deleteUser(userId);
 
-      expect(MockUsersService.user).toHaveBeenCalledWith({ id: Number(userId) });
+      expect(MockUsersService.userIncludeDeleted).toHaveBeenCalledWith({ id: Number(userId) });
       expect(MockUsersService.hardDeleteUser).toHaveBeenCalledWith({ id: Number(userId) });
     });
 
     it('should throw NotFoundException if user is null', async () => {
-      MockUsersService.user.mockResolvedValue(null);
+      MockUsersService.userIncludeDeleted.mockResolvedValue(null);
 
-      expect(async () => await controller.deleteUser('1')).rejects.toThrow('User not found');
+      await expect(async () => await controller.deleteUser('1')).rejects.toThrow('User not found');
     });
   });
 
@@ -152,13 +168,16 @@ describe('UsersController', () => {
       await controller.softDeleteUser(userId);
 
       expect(MockUsersService.user).toHaveBeenCalledWith({ id: Number(userId) });
-      expect(MockUsersService.deleteUser).toHaveBeenCalledWith({ id: Number(userId) });
+      expect(MockUsersService.updateUser).toHaveBeenCalledWith({
+        where: { id: Number(userId) },
+        data: { deletedAt: expect.any(Date) },
+      });
     });
 
     it('should throw NotFoundException if user is null', async () => {
       MockUsersService.user.mockResolvedValue(null);
 
-      expect(async () => await controller.softDeleteUser('1')).rejects.toThrow('User not found');
+      await expect(async () => await controller.softDeleteUser('1')).rejects.toThrow('User not found');
     });
   });
 });
