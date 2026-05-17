@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '../generated/prisma/client';
 import {
   UserCreateInput,
@@ -14,10 +14,7 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async userIncludeDeleted(userWhereUniqueInput: UserWhereUniqueInput): Promise<User | null> {
-    if (!userWhereUniqueInput.id) {
-      throw new BadRequestException('User id is required');
-    }
-    const user = await this.prisma.user.findUnique({
+    const user = this.prisma.client.user.findUnique({
       where: userWhereUniqueInput,
     });
 
@@ -25,16 +22,11 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return this.prisma.client.user.findUnique({
-      where: userWhereUniqueInput,
-    });
+    return user;
   }
 
   async user(userWhereUniqueInput: UserWhereUniqueInput): Promise<User | null> {
-    if (!userWhereUniqueInput.id) {
-      throw new BadRequestException('User id is required');
-    }
-    const user = await this.prisma.client.user.findUnique({
+    const user = this.prisma.client.user.findUnique({
       where: userWhereUniqueInput,
     });
 
@@ -42,9 +34,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return this.prisma.client.user.findUnique({
-      where: userWhereUniqueInput,
-    });
+    return user;
   }
 
   async users(params: {
