@@ -42,6 +42,7 @@ model User {
   tenantAdminId Int?
   deletedAt     DateTime?
   passwordHash  String?
+  emailVerified Boolean      @default(false)
 }
 
 model Post {
