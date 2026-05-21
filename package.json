@@ -64,7 +64,6 @@
       "json",
       "ts"
     ],
-    "retryTimes": 0,
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
