@@ -11,14 +11,16 @@ import { SecurityModule } from './security/security.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
     PrismaModule,
-    ConfigModule.forRoot({ load: [configuration], cache: true }),
+    ConfigModule.forRoot({ load: [configuration], cache: true, isGlobal: true }),
     TenantsModule,
     AuthModule,
     SecurityModule,
+    EmailModule,
   ],
   controllers: [AppController, UsersController, PostsController],
   providers: [AppService, UsersService, PostsService],

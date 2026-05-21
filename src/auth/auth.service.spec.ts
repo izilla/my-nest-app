@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '../generated/prisma/client';
 import { SecurityService } from '../security/security.service';
 import { UsersService } from '../users/users.service';
+import { AuthTokenService } from './auth-token.service';
 import { AuthService } from './auth.service';
 
 type MockSecurityServiceType = {
@@ -24,6 +25,10 @@ const MockUsersService: MockUsersServiceType = {
   createUser: jest.fn(),
 };
 
+const MockAuthTokenService = {
+  sign: jest.fn().mockReturnValue('test-token'),
+};
+
 describe('AuthService', () => {
   let service: AuthService;
 
@@ -33,6 +38,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: SecurityService, useValue: MockSecurityService },
         { provide: UsersService, useValue: MockUsersService },
+        { provide: AuthTokenService, useValue: MockAuthTokenService },
       ],
     }).compile();
 
@@ -46,16 +52,19 @@ describe('AuthService', () => {
   describe('signIn', () => {
     it('should sign in a user', async () => {
       const fakeUser = {
+        id: 1,
         email: 'fakeuser@email.com',
         passwordHash: '123',
       } as User;
       MockUsersService.user.mockResolvedValue(fakeUser);
       MockSecurityService.compare.mockResolvedValue(true);
 
-      await service.signIn('fakeuser@email.com', 'pass');
+      const result = await service.signIn('fakeuser@email.com', 'pass');
 
       expect(MockUsersService.user).toHaveBeenCalledWith({ email: fakeUser.email });
       expect(MockSecurityService.compare).toHaveBeenCalledWith('pass', '123');
+      expect(MockAuthTokenService.sign).toHaveBeenCalledWith({ sub: 1 });
+      expect(result.accessToken).toBe('test-token');
     });
   });
 

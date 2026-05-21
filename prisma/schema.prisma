@@ -32,17 +32,28 @@ model TenantAdmin {
 }
 
 model User {
-  id            Int          @id @default(autoincrement())
-  email         String       @unique
-  name          String?
-  posts         Post[]
-  tenant        Tenant?      @relation(fields: [tenantId], references: [id])
-  tenantId      Int?
-  tenantAdmin   TenantAdmin?
-  tenantAdminId Int?
-  deletedAt     DateTime?
-  passwordHash  String?
-  emailVerified Boolean      @default(false)
+  id                      Int                      @id @default(autoincrement())
+  email                   String                   @unique
+  name                    String?
+  posts                   Post[]
+  tenant                  Tenant?                  @relation(fields: [tenantId], references: [id])
+  tenantId                Int?
+  tenantAdmin             TenantAdmin?
+  tenantAdminId           Int?
+  deletedAt               DateTime?
+  passwordHash            String?
+  emailVerified           Boolean                  @default(false)
+  emailVerificationTokens EmailVerificationToken[]
+}
+
+model EmailVerificationToken {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id])
+  token     String    @unique
+  userId    Int
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 }
 
 model Post {

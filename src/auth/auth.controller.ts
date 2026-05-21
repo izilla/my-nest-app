@@ -8,7 +8,7 @@ export class AuthController {
 
   @HttpCode(200)
   @Post('login')
-  signIn(@Body() signInDto: Record<string, string>): Promise<Omit<UserModel, 'passwordHash'>> {
+  signIn(@Body() signInDto: Record<string, string>): Promise<{ accessToken: string } & Omit<UserModel, 'passwordHash'>> {
     return this.authService.signIn(signInDto.email, signInDto.pass);
   }
 }

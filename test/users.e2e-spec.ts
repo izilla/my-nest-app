@@ -10,6 +10,8 @@ import { SecurityService } from '../src/security/security.service';
 describe('UsersController (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let securityService: SecurityService;
+  let authToken: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -19,6 +21,7 @@ describe('UsersController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     prisma = moduleFixture.get<PrismaService>(PrismaService);
+    securityService = moduleFixture.get<SecurityService>(SecurityService);
     await app.init();
   });
 
@@ -31,6 +34,24 @@ describe('UsersController (e2e)', () => {
     await prisma.user.deleteMany().catch(() => {
       // Ignore errors if the table is already empty
     });
+
+    // Create an authenticated user for protected endpoints
+    const passwordHash = await securityService.hash('testpass123');
+    const authUser = await prisma.user.create({
+      data: {
+        email: 'auth@example.com',
+        name: 'Auth User',
+        passwordHash,
+        emailVerified: true,
+      },
+    });
+
+    // Sign in to get auth token
+    const signInResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'auth@example.com', pass: 'testpass123' });
+
+    authToken = signInResponse.body.accessToken;
   });
 
   describe('/users (GET)', () => {
@@ -88,6 +109,7 @@ describe('UsersController (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/users/${createdUser.id}/hard`)
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect(res => {
           expect(res.body).toMatchObject({
@@ -110,6 +132,7 @@ describe('UsersController (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/users/${createdUser.id}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect(res => {
           expect(res.body).toMatchObject({
@@ -133,6 +156,7 @@ describe('UsersController (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/users/${createdUser.id}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(updatedData)
         .expect(200)
         .expect(res => {

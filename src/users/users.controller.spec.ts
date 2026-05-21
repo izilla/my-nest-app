@@ -1,7 +1,9 @@
 /** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: specs are long */
 import { Test, TestingModule } from '@nestjs/testing';
+import { AuthGuard } from '../auth/auth.guard';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { EmailVerificationService } from '../email/email-verification.service';
 
 type MockUsersServiceType = {
   users: jest.MockedFunction<UsersService['users']>;
@@ -11,6 +13,11 @@ type MockUsersServiceType = {
   updateUser: jest.MockedFunction<UsersService['updateUser']>;
   hardDeleteUser: jest.MockedFunction<UsersService['hardDeleteUser']>;
   deleteUser: jest.MockedFunction<UsersService['deleteUser']>;
+};
+
+const MockEmailVerificationService = {
+  sendVerificationEmail: jest.fn(),
+  verifyEmailToken: jest.fn(),
 };
 
 const MockUsersService: MockUsersServiceType = {
@@ -23,6 +30,10 @@ const MockUsersService: MockUsersServiceType = {
   deleteUser: jest.fn(),
 };
 
+const MockAuthGuard = {
+  canActivate: jest.fn().mockResolvedValue(true),
+};
+
 const mockUser = {
   id: 1,
   email: 'test@example.com',
@@ -31,6 +42,7 @@ const mockUser = {
   tenantId: 1,
   tenantAdminId: 1,
   passwordHash: 'hashedpassword',
+  emailVerified: false,
 };
 
 describe('UsersController', () => {
@@ -45,8 +57,15 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: MockUsersService,
         },
+        {
+          provide: EmailVerificationService,
+          useValue: MockEmailVerificationService,
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue(MockAuthGuard)
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
     MockUsersService.users.mockReset();
@@ -56,10 +75,8 @@ describe('UsersController', () => {
     MockUsersService.updateUser.mockReset();
     MockUsersService.hardDeleteUser.mockReset();
     MockUsersService.deleteUser.mockReset();
-  });
-
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+    MockEmailVerificationService.sendVerificationEmail.mockReset();
+    MockEmailVerificationService.verifyEmailToken.mockReset();
   });
 
   describe('root', () => {
@@ -102,6 +119,45 @@ describe('UsersController', () => {
 
       await expect(async () => await controller.updateUser('1', { name: 'Updated Name' })).rejects.toThrow(
         'User not found',
+      );
+    });
+  });
+
+  describe('sendVerification', () => {
+    it('should send a verification email for the provided address', async () => {
+      MockEmailVerificationService.sendVerificationEmail.mockResolvedValue({
+        verificationUrl: 'http://localhost:3000/users/verify-email?token=abc',
+      });
+
+      const result = await controller.sendVerification({ email: 'test@example.com' });
+
+      expect(MockEmailVerificationService.sendVerificationEmail).toHaveBeenCalledWith('test@example.com');
+      expect(result).toEqual({ verificationUrl: 'http://localhost:3000/users/verify-email?token=abc' });
+    });
+
+    it('should throw BadRequestException when email is missing', async () => {
+      await expect(async () => await controller.sendVerification({ email: '' })).rejects.toThrow(
+        'Email is required',
+      );
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('should verify an email using a token', async () => {
+      MockEmailVerificationService.verifyEmailToken.mockResolvedValue({
+        email: 'test@example.com',
+        emailVerified: true,
+      });
+
+      const result = await controller.verifyEmail('token123');
+
+      expect(MockEmailVerificationService.verifyEmailToken).toHaveBeenCalledWith('token123');
+      expect(result).toEqual({ email: 'test@example.com', emailVerified: true });
+    });
+
+    it('should throw BadRequestException when token is missing', async () => {
+      await expect(async () => await controller.verifyEmail('')).rejects.toThrow(
+        'Verification token is required',
       );
     });
   });

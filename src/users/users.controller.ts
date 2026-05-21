@@ -8,18 +8,43 @@ import {
   Param,
   Patch,
   Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { User } from '../generated/prisma/client';
 import { UserModel } from '../generated/prisma/models';
+import { EmailVerificationService } from '../email/email-verification.service';
 import { UsersService } from './users.service';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly emailVerificationService: EmailVerificationService,
+  ) {}
 
   @Get()
   root(): Promise<User[]> {
     return this.usersService.users({});
+  }
+
+  @Post('send-verification')
+  async sendVerification(@Body() body: { email: string }): Promise<{ verificationUrl: string }> {
+    if (!body.email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    return this.emailVerificationService.sendVerificationEmail(body.email);
+  }
+
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string): Promise<{ email: string; emailVerified: boolean }> {
+    if (!token) {
+      throw new BadRequestException('Verification token is required');
+    }
+
+    return this.emailVerificationService.verifyEmailToken(token);
   }
 
   @Get(':id')
@@ -33,6 +58,7 @@ export class UsersController {
     return this.usersService.user({ id: Number(id) });
   }
 
+  @UseGuards(AuthGuard)
   @Patch(':id')
   async updateUser(@Param('id') id: string, @Body() userData: Pick<Partial<User>, 'email' | 'name'>): Promise<User> {
     const user = await this.usersService.user({ id: Number(id) });
@@ -59,6 +85,7 @@ export class UsersController {
   }
 
   // TODO: Add authentication and authorization check for internal user (not to be used in production)
+  @UseGuards(AuthGuard)
   @Delete()
   async deleteAllUsers(): Promise<number> {
     const users = await this.usersService.users({});
@@ -73,6 +100,7 @@ export class UsersController {
   }
 
   // TODO: Add authentication and authorization check for internal user (not to be used in production)
+  @UseGuards(AuthGuard)
   @Delete(':id/hard')
   async deleteUser(@Param('id') id: string): Promise<User> {
     const user = await this.usersService.userIncludeDeleted({ id: Number(id) });
@@ -84,6 +112,7 @@ export class UsersController {
     return this.usersService.hardDeleteUser({ id: Number(id) });
   }
 
+  @UseGuards(AuthGuard)
   @Delete(':id')
   async softDeleteUser(@Param('id') id: string): Promise<User> {
     const user = await this.usersService.user({ id: Number(id) });
