@@ -17,7 +17,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:e2e": "bun --env-file=.env.test jest --runInBand --config ./test/jest-e2e.json",
+    "test:e2e": "bun --env-file=.env.test jest --config ./test/jest-e2e.json",
     "test:e2e:watch": "bun --env-file=.env.test jest --watch --config ./test/jest-e2e.json",
     "test:migrate": "bun --env-file=.env.test prisma migrate deploy",
     "test:reset": "bun --env-file=.env.test prisma migrate reset --force",

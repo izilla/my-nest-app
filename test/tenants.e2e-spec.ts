@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { TenantsModule } from '../src/tenants/tenants.module';
+import { cleanTestData, uniqueEmail, uniqueName, uniqueSlug } from './e2e-utils';
 
 describe('TenantsController (e2e)', () => {
   let app: INestApplication<App>;
@@ -21,24 +22,12 @@ describe('TenantsController (e2e)', () => {
     await app.init();
   });
 
-  const clearData = async () => {
-    await prisma.tenant.deleteMany().catch(() => {
-      // Ignore errors if the table is already empty
-    });
-    await prisma.user.deleteMany().catch(() => {
-      // Ignore errors if the table is already empty
-    });
-    await prisma.tenantAdmin.deleteMany().catch(() => {
-      // Ignore errors if the table is already empty
-    });
-  };
-
   afterEach(async () => {
-    await clearData();
+    await cleanTestData(prisma);
   });
 
   afterAll(async () => {
-    await clearData();
+    await cleanTestData(prisma);
     await app.close();
     await prisma.$disconnect();
   });
@@ -53,7 +42,7 @@ describe('TenantsController (e2e)', () => {
   });
 
   it('/tenants (POST)', () => {
-    const newTenant = { name: 'Test Tenant', slug: 'TT101' };
+    const newTenant = { name: uniqueName('Test Tenant'), slug: uniqueSlug('TT101') };
 
     return request(app.getHttpServer())
       .post('/tenants')
@@ -71,7 +60,7 @@ describe('TenantsController (e2e)', () => {
   it('/tenants/:id (DELETE)', async () => {
     // First, create a tenant to ensure there is one to delete
     const createdTenant = await prisma.tenant.create({
-      data: { name: 'Tenant to Delete', slug: 'TD101' },
+      data: { name: uniqueName('Tenant to Delete'), slug: uniqueSlug('TD101') },
     });
 
     return request(app.getHttpServer())
@@ -89,10 +78,13 @@ describe('TenantsController (e2e)', () => {
 
   it('/tenants/:id/assign-user (POST)', async () => {
     const newTenant = await prisma.tenant.create({
-      data: { name: 'Tenant for User Assignment', slug: 'TUA101' },
+      data: { name: uniqueName('Tenant for User Assignment'), slug: uniqueSlug('TUA101') },
     });
     const newUser = await prisma.user.create({
-      data: { name: 'User for Tenant Assignment', email: 'tenantadmin@example.com' },
+      data: {
+        name: uniqueName('User for Tenant Assignment'),
+        email: uniqueEmail('tenantadmin'),
+      },
     });
 
     return request(app.getHttpServer())
@@ -111,10 +103,13 @@ describe('TenantsController (e2e)', () => {
 
   it('/tenants/:id/assign-admin', async () => {
     const newTenant = await prisma.tenant.create({
-      data: { name: 'Tenant for Admin Assignment', slug: 'TAA102' },
+      data: { name: uniqueName('Tenant for Admin Assignment'), slug: uniqueSlug('TAA102') },
     });
     const newUser = await prisma.user.create({
-      data: { name: 'User for Admin Assignment', email: 'admin@example.com' },
+      data: {
+        name: uniqueName('User for Admin Assignment'),
+        email: uniqueEmail('admin'),
+      },
     });
 
     return request(app.getHttpServer())

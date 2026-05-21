@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { SecurityService } from '../src/security/security.service';
+import { authEmail, authPassword, cleanTestData, uniqueEmail, uniqueName } from './e2e-utils';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication<App>;
@@ -31,16 +32,12 @@ describe('UsersController (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.user.deleteMany().catch(() => {
-      // Ignore errors if the table is already empty
-    });
-
     // Create an authenticated user for protected endpoints
-    const passwordHash = await securityService.hash('testpass123');
-    const authUser = await prisma.user.create({
+    const passwordHash = await securityService.hash(authPassword);
+    await prisma.user.create({
       data: {
-        email: 'auth@example.com',
-        name: 'Auth User',
+        email: authEmail(),
+        name: uniqueName('Auth User'),
         passwordHash,
         emailVerified: true,
       },
@@ -49,9 +46,13 @@ describe('UsersController (e2e)', () => {
     // Sign in to get auth token
     const signInResponse = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email: 'auth@example.com', pass: 'testpass123' });
+      .send({ email: authEmail(), pass: authPassword });
 
     authToken = signInResponse.body.accessToken;
+  });
+
+  afterEach(async () => {
+    await cleanTestData(prisma);
   });
 
   describe('/users (GET)', () => {
@@ -69,7 +70,7 @@ describe('UsersController (e2e)', () => {
     it('should return a single user by ID', async () => {
       // First, create a user to ensure there is one to retrieve
       const createdUser = await prisma.user.create({
-        data: { name: 'Test User', email: 'test@example.com' },
+        data: { name: uniqueName('Test User'), email: uniqueEmail('test') },
       });
       return request(app.getHttpServer())
         .get(`/users/${createdUser.id}`)
@@ -86,7 +87,7 @@ describe('UsersController (e2e)', () => {
 
   describe('/users (POST)', () => {
     it('should create a new user', () => {
-      const newUser = { name: 'New User', email: 'newuser@example.com' };
+      const newUser = { name: uniqueName('New User'), email: uniqueEmail('newuser') };
       return request(app.getHttpServer())
         .post('/users')
         .send(newUser)
@@ -104,7 +105,7 @@ describe('UsersController (e2e)', () => {
     it('should delete a user by ID', async () => {
       // First, create a user to ensure there is one to delete
       const createdUser = await prisma.user.create({
-        data: { name: 'Delete User', email: 'deleteuser@example.com' },
+        data: { name: uniqueName('Delete User'), email: uniqueEmail('deleteuser') },
       });
 
       await request(app.getHttpServer())
@@ -127,7 +128,10 @@ describe('UsersController (e2e)', () => {
     it('should soft delete a user by ID', async () => {
       // First, create a user to ensure there is one to delete
       const createdUser = await prisma.user.create({
-        data: { name: 'Soft Delete User', email: 'softdeleteduser@email.com' },
+        data: {
+          name: uniqueName('Soft Delete User'),
+          email: uniqueEmail('softdeleteduser'),
+        },
       });
 
       await request(app.getHttpServer())
@@ -149,10 +153,14 @@ describe('UsersController (e2e)', () => {
     it('should update a user by ID', async () => {
       // First, create a user to ensure there is one to update
       const createdUser = await prisma.user.create({
-        data: { name: 'Update User', email: 'updateuser@example.com' },
+        data: { name: uniqueName('Update User'), email: uniqueEmail('updateuser') },
       });
 
-      const updatedData = { id: createdUser.id, name: 'Updated User Name', email: 'updateduseremail@example.com' };
+      const updatedData = {
+        id: createdUser.id,
+        name: uniqueName('Updated User Name'),
+        email: uniqueEmail('updateduser'),
+      };
 
       await request(app.getHttpServer())
         .patch(`/users/${createdUser.id}`)

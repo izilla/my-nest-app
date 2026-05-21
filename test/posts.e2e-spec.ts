@@ -5,6 +5,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { cleanTestData, uniqueText, uniqueTitle } from './e2e-utils';
 
 describe('PostsController (e2e)', () => {
   let app: INestApplication<App>;
@@ -21,9 +22,7 @@ describe('PostsController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await prisma.post.deleteMany().catch(() => {
-      // Ignore errors if the table is already empty
-    });
+    await cleanTestData(prisma);
   });
 
   afterAll(async () => {
@@ -44,7 +43,10 @@ describe('PostsController (e2e)', () => {
 
   describe('/posts (POST)', () => {
     it('should create a new post', () => {
-      const newPost = { title: 'Test Post', content: 'This is a test post.' };
+      const newPost = {
+        title: uniqueTitle('Test Post'),
+        content: uniqueText('This is a test post.'),
+      };
       return request(app.getHttpServer())
         .post('/posts')
         .send(newPost)
@@ -62,7 +64,10 @@ describe('PostsController (e2e)', () => {
     it('should return a single post by ID', async () => {
       // First, create a post to ensure there is one to retrieve
       const createdPost = await prisma.post.create({
-        data: { title: 'Another Test Post', content: 'This is another test post.' },
+        data: {
+          title: uniqueTitle('Another Test Post'),
+          content: uniqueText('This is another test post.'),
+        },
       });
       const postUpdates = { title: 'New Title', content: 'New content' };
       return request(app.getHttpServer())
@@ -83,7 +88,10 @@ describe('PostsController (e2e)', () => {
     it('should delete a post by ID', async () => {
       // First, create a post to ensure there is one to delete
       const createdPost = await prisma.post.create({
-        data: { title: 'Post to Delete', content: 'This post will be deleted.' },
+        data: {
+          title: uniqueTitle('Post to Delete'),
+          content: uniqueText('This post will be deleted.'),
+        },
       });
 
       await request(app.getHttpServer())
