@@ -13,6 +13,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  THERAPIST
+  CLIENT
+  TENANT_ADMIN
+}
+
 model Tenant {
   id           Int           @id @default(autoincrement())
   name         String
@@ -35,6 +41,7 @@ model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
   name                    String?
+  roles                   UserRole[]               @default([CLIENT])
   posts                   Post[]
   tenant                  Tenant?                  @relation(fields: [tenantId], references: [id])
   tenantId                Int?
