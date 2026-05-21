@@ -27,3 +27,25 @@
 - Use a shared helper module like `test/e2e-utils.ts` for unique test values and cleanup logic.
 - Keep `test/jest-e2e.json` and `.env.test` dedicated to e2e execution, not unit tests.
 - For CI, set `TEST_RUN_ID` uniquely per pipeline/job and let Jest use workers rather than forcing `--runInBand`.
+
+## Prisma ORM Best Practices
+
+- Use `PrismaService` for all database operations; inject it into your NestJS services via constructor.
+- Keep Prisma calls in service layer, not in controllers; controllers handle HTTP concerns only.
+- Use `prisma.user.create()`, `prisma.user.update()`, `prisma.user.delete()` for CRUD operations.
+- Use `where` clause filtering for specific records; avoid fetching all data and filtering in memory.
+- Use `select` to fetch only required fields; avoid fetching entire records unnecessarily.
+- Use relations (e.g., `include: { posts: true }`) cautiously; fetch related data only when needed.
+- Enable soft deletes via `deletedAt` timestamp; use Prisma extensions to filter soft-deleted records by default.
+- Create migrations after schema changes: `bun run test:migrate` for test environment.
+- Use Prisma Studio (`bunx prisma studio`) for inspecting database during development.
+
+## Authentication and Authorization
+
+- Use `AuthGuard` from `src/auth/auth.guard.ts` to protect routes that require authentication.
+- Apply `@UseGuards(AuthGuard)` on controller methods to enforce login requirement.
+- Use `RolesGuard` combined with `@Roles([UserRole.THERAPIST])` decorator to restrict access by user role.
+- Stack guards: `@UseGuards(AuthGuard, RolesGuard)` to require both auth and specific role.
+- Access authenticated user in controllers via `@Req() request: Request` or custom decorator.
+- User roles are defined as array on User model; a user can have multiple roles (e.g., `THERAPIST` and `TENANT_ADMIN`).
+- Always create test users with appropriate roles in e2e tests before testing protected endpoints.

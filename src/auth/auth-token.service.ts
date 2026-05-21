@@ -30,7 +30,7 @@ export class AuthTokenService {
   verify(token: string): AuthPayload {
     const [encoded, signature] = token.split('.');
 
-    if (!encoded || !signature) {
+    if (!(encoded && signature)) {
       throw new UnauthorizedException('Invalid authentication token');
     }
 
@@ -45,7 +45,7 @@ export class AuthTokenService {
     const payloadJson = Buffer.from(this.base64UrlDecode(encoded), 'base64').toString('utf8');
     const payload = JSON.parse(payloadJson) as AuthPayload;
 
-    if (!payload.sub || !payload.exp) {
+    if (!(payload.sub && payload.exp)) {
       throw new UnauthorizedException('Invalid authentication token');
     }
 

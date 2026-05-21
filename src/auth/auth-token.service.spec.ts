@@ -1,12 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
+/** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: tests */
+
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 import crypto from 'crypto';
 import { AuthTokenService } from './auth-token.service';
 
 describe('AuthTokenService', () => {
   let service: AuthTokenService;
-  let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -28,7 +29,6 @@ describe('AuthTokenService', () => {
     }).compile();
 
     service = module.get<AuthTokenService>(AuthTokenService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   describe('sign', () => {
@@ -92,9 +92,9 @@ describe('AuthTokenService', () => {
       const [encoded, signature] = token.split('.');
 
       // Tamper with the signature
-      const tamperedSignature = Buffer.from(signature, 'hex')
-        .map((b, i) => (i === 0 ? b ^ 0xff : b))
-        .toString('hex');
+      const tamperedSignature = Buffer.from(
+        Buffer.from(signature, 'hex').map((b, i) => (i === 0 ? b ^ 0xff : b)),
+      ).toString('hex');
       const tamperedToken = `${encoded}.${tamperedSignature}`;
 
       expect(() => service.verify(tamperedToken)).toThrow(UnauthorizedException);
@@ -116,7 +116,11 @@ describe('AuthTokenService', () => {
       ).toString('utf8');
 
       const tamperedPayload = JSON.stringify({ ...JSON.parse(decodedPayload), sub: 999 });
-      const tamperedEncoded = Buffer.from(tamperedPayload).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      const tamperedEncoded = Buffer.from(tamperedPayload)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
 
       const tamperedToken = `${tamperedEncoded}.${signature}`;
 
@@ -160,10 +164,7 @@ describe('AuthTokenService', () => {
         .replace(/\//g, '_')
         .replace(/=+$/g, '');
 
-      const signature = crypto
-        .createHmac('sha256', 'test-secret-key')
-        .update(encoded)
-        .digest('hex');
+      const signature = crypto.createHmac('sha256', 'test-secret-key').update(encoded).digest('hex');
 
       const token = `${encoded}.${signature}`;
 
@@ -180,10 +181,7 @@ describe('AuthTokenService', () => {
         .replace(/\//g, '_')
         .replace(/=+$/g, '');
 
-      const signature = crypto
-        .createHmac('sha256', 'test-secret-key')
-        .update(encoded)
-        .digest('hex');
+      const signature = crypto.createHmac('sha256', 'test-secret-key').update(encoded).digest('hex');
 
       const token = `${encoded}.${signature}`;
 
@@ -202,13 +200,13 @@ describe('AuthTokenService', () => {
     it('should sign and verify a token successfully multiple times', () => {
       const userIds = [1, 42, 999, 12345];
 
-      userIds.forEach(userId => {
+      for (const userId of userIds) {
         const token = service.sign({ sub: userId });
         const verified = service.verify(token);
 
         expect(verified.sub).toBe(userId);
         expect(verified.exp).toBeDefined();
-      });
+      }
     });
   });
 });

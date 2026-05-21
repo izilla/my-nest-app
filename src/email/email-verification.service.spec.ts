@@ -1,8 +1,23 @@
+/** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: tests can be long */
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EmailVerificationToken, User } from '../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { EmailVerificationService } from './email-verification.service';
 
-const mockPrismaService = {
+type MockPrismaService = {
+  user: {
+    findUnique: jest.MockedFunction<PrismaService['user']['findUnique']>;
+    update: jest.MockedFunction<PrismaService['user']['update']>;
+  };
+  emailVerificationToken: {
+    create: jest.MockedFunction<PrismaService['emailVerificationToken']['create']>;
+    findFirst: jest.MockedFunction<PrismaService['emailVerificationToken']['findFirst']>;
+    update: jest.MockedFunction<PrismaService['emailVerificationToken']['update']>;
+  };
+};
+
+const mockPrismaService: MockPrismaService = {
   user: {
     findUnique: jest.fn(),
     update: jest.fn(),
@@ -24,7 +39,7 @@ const mockConfigService: Partial<ConfigService> = {
       case 'EMAIL_VERIFICATION_TOKEN_TTL_SECONDS':
         return '3600';
       default:
-        return undefined;
+        return;
     }
   }),
 };
@@ -34,13 +49,16 @@ describe('EmailVerificationService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new EmailVerificationService(mockPrismaService as any, mockConfigService as ConfigService);
+    service = new EmailVerificationService(
+      mockPrismaService as unknown as PrismaService,
+      mockConfigService as ConfigService,
+    );
   });
 
   it('should send a verification email for an unverified user', async () => {
-    const user = { id: 1, email: 'test@example.com', emailVerified: false };
+    const user = { id: 1, email: 'test@example.com', emailVerified: false } as User;
     mockPrismaService.user.findUnique.mockResolvedValue(user);
-    mockPrismaService.emailVerificationToken.create.mockResolvedValue({});
+    mockPrismaService.emailVerificationToken.create.mockResolvedValue({} as EmailVerificationToken);
 
     const result = await service.sendVerificationEmail('test@example.com');
 
@@ -64,19 +82,20 @@ describe('EmailVerificationService', () => {
   });
 
   it('should verify a token and mark it used', async () => {
-    const user = { id: 1, email: 'test@example.com', emailVerified: false };
+    const user = { id: 1, email: 'test@example.com', emailVerified: false } as User;
     const verificationToken = {
       id: 1,
       token: 'abc123',
       expiresAt: new Date(Date.now() + 10000),
       usedAt: null,
       createdAt: new Date(),
+      userId: user.id,
       user,
-    };
+    } as EmailVerificationToken & { user: User };
 
     mockPrismaService.emailVerificationToken.findFirst.mockResolvedValue(verificationToken);
-    mockPrismaService.emailVerificationToken.update.mockResolvedValue({});
-    mockPrismaService.user.update.mockResolvedValue({ ...user, emailVerified: true });
+    mockPrismaService.emailVerificationToken.update.mockResolvedValue({} as EmailVerificationToken);
+    mockPrismaService.user.update.mockResolvedValue({ ...user, emailVerified: true } as User);
 
     const result = await service.verifyEmailToken('abc123');
 
