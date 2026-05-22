@@ -22,7 +22,9 @@
     "test:migrate": "bun --env-file=.env.test prisma migrate deploy",
     "test:reset": "bun --env-file=.env.test prisma migrate reset --force",
     "test:generate": "bun --env-file=.env.test prisma generate",
-    "prisma": "bunx --bun prisma"
+    "prisma": "bunx --bun prisma",
+    "dev:api": "bun run start:dev",
+    "dev:web": "bun --cwd frontend dev"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.19",
@@ -77,5 +79,6 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  }
+  },
+  "workspaces": ["frontend"]
 }

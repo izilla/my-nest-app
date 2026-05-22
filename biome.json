@@ -26,6 +26,9 @@
       "complexity": "error",
       "style": {
         "useImportType": "off"
+      },
+      "correctness": {
+        "noChildrenProp": "off"
       }
     }
   },
