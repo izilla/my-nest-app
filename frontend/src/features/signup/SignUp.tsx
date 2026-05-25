@@ -39,13 +39,14 @@ const signUpSchema = z.object({
   confirmPassword: z.string().min(6, { message: 'Confirm Password must be at least 6 characters' }),
 });
 
-const generateSlug = (name: string) => {
-  return `${name?.[0]}101`;
-}
-
 const adaptToApi = (newTenant: NewTenant) => ({
   name: newTenant.organization,
-  slug: generateSlug(newTenant.organization),
+  tenantAdmins: [
+    {
+      email: newTenant.email,
+      name: newTenant.email.split('@')[0], // Use the part before @ as the name
+    },
+  ],
 });
 
 export const SignUp = () => {

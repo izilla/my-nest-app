@@ -11,11 +11,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
+import { EmailVerificationService } from '../email/email-verification.service';
 import { User } from '../generated/prisma/client';
 import { UserModel } from '../generated/prisma/models';
-import { EmailVerificationService } from '../email/email-verification.service';
 import { UsersService } from './users.service';
-import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('users')
 export class UsersController {
