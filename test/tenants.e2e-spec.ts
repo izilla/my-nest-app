@@ -41,20 +41,130 @@ describe('TenantsController (e2e)', () => {
       });
   });
 
-  it('/tenants (POST)', () => {
-    const newTenant = { name: uniqueName('Test Tenant'), slug: uniqueSlug('TT101') };
+  describe('/tenants (POST)', () => {
+    it('should create a tenant successfully with admin', async () => {
+      const tenantAdminEmail = uniqueEmail('tenantadmin');
+      const newTenant = {
+        name: uniqueName('Test Tenant'),
+        slug: uniqueSlug('TT101'),
+        tenantAdmins: [{ email: tenantAdminEmail, name: 'Tenant Admin' }],
+        users: [],
+      };
 
-    return request(app.getHttpServer())
-      .post('/tenants')
-      .send(newTenant)
-      .expect(201)
-      .expect(res => {
-        expect(res.body).toEqual({
-          id: expect.any(Number),
-          ...newTenant,
-          deletedAt: null,
+      return request(app.getHttpServer())
+        .post('/tenants')
+        .send(newTenant)
+        .expect(201)
+        .expect(res => {
+          expect(res.body).toEqual({
+            id: expect.any(Number),
+            ...newTenant,
+            deletedAt: null,
+            users: [],
+            tenantAdmins: [
+              {
+                deletedAt: null,
+                id: expect.any(Number),
+                tenantId: expect.any(Number),
+                user: {
+                  deletedAt: null,
+                  id: expect.any(Number),
+                  passwordHash: null,
+                  roles: ['TENANT_ADMIN'],
+                  tenantAdminId: expect.any(Number),
+                  tenantId: expect.any(Number),
+                  email: tenantAdminEmail,
+                  name: 'Tenant Admin',
+                  emailVerified: false,
+                },
+                userId: expect.any(Number),
+              },
+            ],
+          });
         });
+    });
+
+    it('should return 400 if required fields are missing', () => {
+      return request(app.getHttpServer())
+        .post('/tenants')
+        .send({ name: 'Incomplete Tenant' }) // Missing slug and tenantAdmins
+        .expect(400);
+    });
+
+    it('should create a unique slug if not provided', async () => {
+      const newTenant = {
+        name: uniqueName('Tenant Without Slug'),
+        tenantAdmins: [{ email: uniqueEmail('admin'), name: 'Admin' }],
+        users: [],
+      };
+
+      return request(app.getHttpServer())
+        .post('/tenants')
+        .send(newTenant)
+        .expect(201)
+        .expect(res => {
+          expect(res.body.slug).toBeDefined();
+          expect(res.body.slug).toMatch(/^[A-Z]{1,2}[a-z0-9]{3}$/); // Simple slug format check
+        });
+    });
+
+    it('should return 400 if tenant with the same slug already exists', async () => {
+      const slug = uniqueSlug('DUP101');
+      await prisma.tenant.create({
+        data: {
+          name: uniqueName('Existing Tenant'),
+          slug,
+        },
       });
+
+      const newTenant = {
+        name: uniqueName('New Tenant With Duplicate Slug'),
+        slug,
+        tenantAdmins: [{ email: uniqueEmail('admin'), name: 'Admin' }],
+        users: [],
+      };
+
+      return request(app.getHttpServer()).post('/tenants').send(newTenant).expect(400);
+    });
+
+    it('should return 400 if no tenant admin is provided', () => {
+      const newTenant = {
+        name: uniqueName('Tenant Without Admin'),
+        slug: uniqueSlug('TWA101'),
+      };
+
+      return request(app.getHttpServer()).post('/tenants').send(newTenant).expect(400);
+    });
+
+    it('should return 400 if tenant admin email is invalid', () => {
+      const newTenant = {
+        name: uniqueName('Tenant With Invalid Admin Email'),
+        slug: uniqueSlug('TIAE101'),
+        tenantAdmins: [{ email: 'invalid-email', name: 'Admin' }],
+        users: [],
+      };
+
+      return request(app.getHttpServer()).post('/tenants').send(newTenant).expect(400);
+    });
+
+    it('should return 400 if tenant admin email already exists', async () => {
+      const existingEmail = uniqueEmail('existingadmin');
+      await prisma.user.create({
+        data: {
+          name: uniqueName('Existing Admin'),
+          email: existingEmail,
+        },
+      });
+
+      const newTenant = {
+        name: uniqueName('Tenant With Existing Admin Email'),
+        slug: uniqueSlug('TE101'),
+        tenantAdmins: [{ email: existingEmail, name: 'Admin' }],
+        users: [],
+      };
+
+      return request(app.getHttpServer()).post('/tenants').send(newTenant).expect(400);
+    });
   });
 
   it('/tenants/:id (DELETE)', async () => {

@@ -32,22 +32,33 @@ i18n
         translation: {
           welcome: 'Welcome',
           'Please sign up': 'Please sign up',
-          'email': 'Email',
-          'password': 'Password',
-          'sign in': 'Sign in'
-        }
+          email: 'Email',
+          password: 'Password',
+          'sign in': 'Sign in',
+          'sign up': 'Sign up',
+          here: 'here',
+          onboarding: {
+            organization: 'Organization',
+            greeting: 'Welcome to the onboarding process!',
+          },
+        },
       },
       es: {
         translation: {
           welcome: 'Bienvenido',
           'Please sign up': 'Por favor regístrate',
-          'email': 'Correo',
-          'password': 'Contraseña',
-          'sign in': 'Iniciar sesión'
-        }
-      }
-    }
+          email: 'Correo',
+          password: 'Contraseña',
+          'sign in': 'Iniciar sesión',
+          'sign up': 'Regístrate',
+          here: 'aquí',
+          onboarding: {
+            organization: 'Organización',
+            greeting: '¡Bienvenido al proceso de incorporación!',
+          },
+        },
+      },
+    },
   });
-
 
 export default i18n;

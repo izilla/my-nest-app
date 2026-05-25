@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: specs are long */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '../auth/auth.guard';
+import { EmailVerificationService } from '../email/email-verification.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { EmailVerificationService } from '../email/email-verification.service';
 
 type MockUsersServiceType = {
   users: jest.MockedFunction<UsersService['users']>;
@@ -136,9 +136,7 @@ describe('UsersController', () => {
     });
 
     it('should throw BadRequestException when email is missing', async () => {
-      await expect(async () => await controller.sendVerification({ email: '' })).rejects.toThrow(
-        'Email is required',
-      );
+      await expect(async () => await controller.sendVerification({ email: '' })).rejects.toThrow('Email is required');
     });
   });
 
@@ -156,9 +154,7 @@ describe('UsersController', () => {
     });
 
     it('should throw BadRequestException when token is missing', async () => {
-      await expect(async () => await controller.verifyEmail('')).rejects.toThrow(
-        'Verification token is required',
-      );
+      await expect(async () => await controller.verifyEmail('')).rejects.toThrow('Verification token is required');
     });
   });
 

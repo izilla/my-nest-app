@@ -1,6 +1,8 @@
 import { createFormHook } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
+import z from 'zod';
+import api from '#/api/axiosInstance';
 import { FormButton } from '#/components/forms/fields/FormButton';
 import { InputField } from '#/components/forms/fields/InputField';
 import { fieldContext, formContext } from '#/components/forms/useAppFormContext';
@@ -16,31 +18,60 @@ const { useAppForm } = createFormHook({
   formContext,
 });
 
-type NewUser = {
+type NewTenant = {
+  organization: string;
   email: string;
   password: string;
+  confirmPassword: string;
 };
 
-const defaultNewUser: NewUser = {
+const defaultNewTenant: NewTenant = {
+  organization: '',
   email: '',
   password: '',
+  confirmPassword: '',
 };
 
-const loginSchema = z.object({
+const signUpSchema = z.object({
+  organization: z.string().min(2, { message: 'Organization name must be at least 2 characters' }),
   email: z.email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  confirmPassword: z.string().min(6, { message: 'Confirm Password must be at least 6 characters' }),
 });
 
-export const SignIn = () => {
+const generateSlug = (name: string) => {
+  return `${name?.[0]}101`;
+}
+
+const adaptToApi = (newTenant: NewTenant) => ({
+  name: newTenant.organization,
+  slug: generateSlug(newTenant.organization),
+});
+
+export const SignUp = () => {
   const { t } = useTranslation();
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  const mutation = useMutation({
+    mutationFn: async (newTenant: NewTenant) => {
+      const { data } = await api.post(`${apiUrl}/tenants`, JSON.stringify(adaptToApi(newTenant)));
+
+      if (!data) {
+        throw new Error('Failed to create tenant');
+      }
+
+      return data;
+    },
+  });
 
   const form = useAppForm({
-    defaultValues: defaultNewUser,
+    defaultValues: defaultNewTenant,
     validators: {
-      onChange: loginSchema,
+      onChange: signUpSchema,
     },
-    onSubmit: values => {
-      console.log('Form submitted with values:', values);
+    onSubmit: form => {
+      mutation.mutate(form.value);
+      console.log('Form submitted with values:', form.value);
     },
   });
 
@@ -54,6 +85,12 @@ export const SignIn = () => {
           }}>
           <h1 className=''>{t('welcome')}</h1>
           <form.AppField
+            name='organization'
+            children={field => (
+              <field.InputField type='text' label={t('onboarding.organization')} placeholder={t('organization')} />
+            )}
+          />
+          <form.AppField
             name='email'
             children={field => <field.InputField type='email' label={t('email')} placeholder={t('email')} />}
           />
@@ -61,11 +98,15 @@ export const SignIn = () => {
             name='password'
             children={field => <field.InputField type='password' label='Password' placeholder='Password' />}
           />
+          <form.AppField
+            name='confirmPassword'
+            children={field => <field.InputField type='password' label='Confirm Password' placeholder='Confirm Password' />}
+          />
           <form.Subscribe
             selector={state => [state.canSubmit, state.isSubmitting]}
             children={([canSubmit, isSubmitting]) => (
               <form.FormButton type='submit' disabled={!canSubmit || isSubmitting}>
-                {t('sign in')}
+                {t('sign up')}
               </form.FormButton>
             )}
           />

@@ -15,8 +15,8 @@ import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
-    PrismaModule,
     ConfigModule.forRoot({ load: [configuration], cache: true, isGlobal: true }),
+    PrismaModule,
     TenantsModule,
     AuthModule,
     SecurityModule,

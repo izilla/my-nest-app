@@ -17,12 +17,20 @@ export class TenantsController {
   }
 
   @Post()
-  createTenant(@Body() tenantData: { name: string; slug: string }): Promise<Tenant> {
+  createTenant(
+    @Body() tenantData: {
+      name: string;
+      slug: string;
+      users: { email: string; name: string }[];
+      tenantAdmins: { email: string; name: string }[];
+    },
+  ): Promise<Tenant> {
     return this.tenantService.createTenant(tenantData);
   }
 
   @Patch(':id')
   async updateTenant(@Param('id') id: string, @Body() tenantData: { name?: string; slug?: string }): Promise<Tenant> {
+    console.log('Updating tenant with ID:', id, 'and data:', tenantData);
     const tenant = await this.tenantService.tenant({ id: Number(id) });
 
     if (!tenant) {
@@ -46,11 +54,22 @@ export class TenantsController {
     return this.tenantService.deleteTenant({ id: Number(id) });
   }
 
+  @Delete(':id/hard')
+  async hardDeleteTenant(@Param('id') id: string): Promise<Tenant> {
+    const tenant = await this.tenantService.tenant({ id: Number(id) });
+
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    return this.tenantService.deleteTenantHard({ id: Number(id) });
+  }
+
   //XXX: This endpoint is for testing purposes only and should not be used in production. It deletes all tenants in the database.
   @Delete()
   async deleteTenants(): Promise<number> {
-    const tenants = await this.tenantService.tenants({});
-    return Promise.all(tenants.map(tenant => this.tenantService.deleteTenant({ id: tenant.id }))).then(
+    const tenants = await this.tenantService.tenantsWithDeleted({});
+    return Promise.all(tenants.map(tenant => this.tenantService.deleteTenantHard({ id: tenant.id }))).then(
       deletedTenants => deletedTenants.length,
     );
   }
