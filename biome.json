@@ -26,7 +26,15 @@
       "complexity": "error",
       "style": {
         "useImportType": "off"
+      },
+      "correctness": {
+        "noChildrenProp": "off"
       }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   },
   "json": {
@@ -36,7 +44,8 @@
   },
   "javascript": {
     "parser": {
-      "unsafeParameterDecoratorsEnabled": true
+      "unsafeParameterDecoratorsEnabled": true,
+      "jsxEverywhere": true
     },
     "formatter": {
       "quoteStyle": "single",
