@@ -8,23 +8,26 @@ type PlainButtonProps = {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
-type ButtonProps = {
+export type ButtonProps = {
+  className?: string;
   label: string;
-  disabled: boolean;
+  disabled?: boolean;
 } & (SubmitButtonProps | PlainButtonProps);
 
-export const Button = ({ disabled, label, type, onClick }: ButtonProps) => {
+export const Button = ({ className, disabled, label, type, onClick }: ButtonProps) => {
   const handleOnClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (type === 'button') {
       event.preventDefault();
-      onClick(event);
+      if (!disabled) {
+        onClick(event);
+      }
     }
   };
 
   return (
     <button
       type={type}
-      className='rounded-md bg-slate-700 px-4 py-2 text-white hover:bg-slate-800'
+      className={`rounded-md disabled:bg-slate-500 bg-slate-700 px-4 py-2 text-white disabled:text-slate-400 hover:bg-slate-800 ${className}`}
       disabled={disabled}
       onClick={handleOnClick}>
       {label}

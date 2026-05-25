@@ -32,6 +32,11 @@
       }
     }
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "json": {
     "formatter": {
       "indentStyle": "space"
@@ -39,7 +44,8 @@
   },
   "javascript": {
     "parser": {
-      "unsafeParameterDecoratorsEnabled": true
+      "unsafeParameterDecoratorsEnabled": true,
+      "jsxEverywhere": true
     },
     "formatter": {
       "quoteStyle": "single",
