@@ -20,6 +20,10 @@ export class AuthGuard implements CanActivate {
     const token = authHeader.slice(7).trim();
     const payload = this.authTokenService.verify(token);
 
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
 
     if (!user) {

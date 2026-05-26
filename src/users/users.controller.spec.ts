@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '../auth/auth.guard';
 import { EmailVerificationService } from '../email/email-verification.service';
+import { UserRole } from '../generated/prisma/enums';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -43,6 +44,7 @@ const mockUser = {
   tenantAdminId: 1,
   passwordHash: 'hashedpassword',
   emailVerified: false,
+  roles: [UserRole.CLIENT],
 };
 
 describe('UsersController', () => {
@@ -81,9 +83,9 @@ describe('UsersController', () => {
 
   describe('root', () => {
     it('get all users', () => {
-      controller.root();
+      controller.root({ user: { tenantId: mockUser.tenantId } } as any);
 
-      expect(MockUsersService.users).toHaveBeenCalled();
+      expect(MockUsersService.users).toHaveBeenCalledWith({ where: { tenantId: mockUser.tenantId } });
     });
   });
 

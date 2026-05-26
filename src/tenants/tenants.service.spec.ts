@@ -32,6 +32,7 @@ type MockPrismaService = {
     };
     user: {
       findUnique: jest.MockedFunction<PrismaService['client']['user']['findUnique']>;
+      findMany: jest.MockedFunction<PrismaService['client']['user']['findMany']>;
     };
   };
 };
@@ -55,6 +56,7 @@ const prismaMock: MockPrismaService = {
     },
     user: {
       findUnique: jest.fn().mockResolvedValue({ id: 1, name: 'Test User', email: 'test@example.com' }),
+      findMany: jest.fn().mockResolvedValue([]),
     },
   },
 };

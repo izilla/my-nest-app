@@ -3,17 +3,20 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
+import { AuthRoles } from '../auth/auth-roles.decorator';
 import { EmailVerificationService } from '../email/email-verification.service';
-import { User } from '../generated/prisma/client';
+import { User, UserRole } from '../generated/prisma/client';
 import { UserModel } from '../generated/prisma/models';
 import { UsersService } from './users.service';
 
@@ -24,9 +27,16 @@ export class UsersController {
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
+  @AuthRoles(UserRole.TENANT_ADMIN)
   @Get()
-  root(): Promise<User[]> {
-    return this.usersService.users({});
+  async root(@Req() req: any): Promise<User[]> {
+    const tenantId = req?.user?.tenantId;
+
+    if (!tenantId) {
+      throw new ForbiddenException('Tenant context required');
+    }
+
+    return this.usersService.users({ where: { tenantId } });
   }
 
   @Post('send-verification')

@@ -5,6 +5,9 @@ import crypto from 'crypto';
 interface AuthPayload {
   sub: number;
   exp: number;
+  roles?: string[];
+  tenantId?: string;
+  isTenantAdmin?: boolean;
 }
 
 @Injectable()
@@ -17,10 +20,13 @@ export class AuthTokenService {
     this.tokenTtlSeconds = parseInt(this.configService.get<string>('AUTH_TOKEN_TTL_SECONDS') ?? '86400', 10);
   }
 
-  sign(payload: { sub: number }): string {
+  sign(payload: { sub: number; roles?: string[]; tenantId?: string; isTenantAdmin?: boolean }): string {
     const authPayload: AuthPayload = {
       sub: payload.sub,
       exp: Math.floor(Date.now() / 1000) + this.tokenTtlSeconds,
+      roles: payload.roles,
+      tenantId: payload.tenantId,
+      isTenantAdmin: payload.isTenantAdmin,
     };
     const encoded = this.base64UrlEncode(Buffer.from(JSON.stringify(authPayload), 'utf8'));
     const signature = this.signPayload(encoded);

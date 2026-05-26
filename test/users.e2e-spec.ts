@@ -56,12 +56,35 @@ describe('UsersController (e2e)', () => {
   });
 
   describe('/users (GET)', () => {
-    it('should return an array of users', () => {
+    it('should return an array of users scoped to tenant', async () => {
+      // create a tenant and tenant-admin user, sign in as that admin
+      const tenant = await prisma.tenant.create({ data: { name: uniqueName('Tenant'), slug: uniqueName('T') } });
+      const adminPassword = 'AdminPass123!';
+      const adminPasswordHash = await securityService.hash(adminPassword);
+      const adminUser = await prisma.user.create({
+        data: {
+          name: uniqueName('Tenant Admin'),
+          email: uniqueEmail('tenantadmin'),
+          passwordHash: adminPasswordHash,
+          emailVerified: true,
+          tenantId: tenant.id,
+          roles: ['TENANT_ADMIN'],
+        },
+      });
+
+      const signInResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: adminUser.email, pass: adminPassword });
+      const adminToken = signInResponse.body.accessToken;
+
       return request(app.getHttpServer())
         .get('/users')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
         .expect(res => {
           expect(Array.isArray(res.body)).toBe(true);
+          // users returned should belong to the tenant
+          res.body.forEach((u: any) => expect(u.tenantId).toBe(tenant.id));
         });
     });
   });
