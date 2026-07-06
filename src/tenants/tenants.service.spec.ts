@@ -28,6 +28,7 @@ type MockPrismaService = {
     tenant: {
       findUnique: jest.MockedFunction<PrismaService['client']['tenant']['findUnique']>;
       findMany: jest.MockedFunction<PrismaService['client']['tenant']['findMany']>;
+      count: jest.MockedFunction<PrismaService['client']['tenant']['count']>;
       delete: jest.MockedFunction<PrismaService['client']['tenant']['delete']>;
     };
     user: {
@@ -52,6 +53,7 @@ const prismaMock: MockPrismaService = {
     tenant: {
       findUnique: jest.fn().mockResolvedValue(mockTenant),
       findMany: jest.fn().mockResolvedValue([mockTenant]),
+      count: jest.fn().mockResolvedValue(0),
       delete: jest.fn(),
     },
     user: {
@@ -229,6 +231,87 @@ describe('TenantsService', () => {
         },
       },
     });
+  });
+
+  it('should generate a slug when slug is missing', async () => {
+    const payload = {
+      name: 'example tenant',
+      users: [],
+      tenantAdmins: [{ email: 'admin@example.com', name: 'Admin Name' }],
+    };
+
+    prismaMock.client.tenant.count.mockResolvedValueOnce(1);
+    prismaMock.client.tenant.findUnique.mockResolvedValueOnce(null);
+    prismaMock.tenant.create.mockResolvedValue({
+      ...mockTenant,
+      ...payload,
+      id: 2,
+      slug: 'EX002',
+    } as TenantModel);
+    prismaMock.tenantAdmin.create.mockResolvedValue({
+      id: 10,
+      tenantId: 2,
+      userId: 20,
+      deletedAt: null,
+    });
+    prismaMock.user.update.mockResolvedValue({
+      id: 20,
+      email: 'admin@example.com',
+      name: 'Admin Name',
+      tenantId: 2,
+      tenantAdminId: 10,
+      roles: ['TENANT_ADMIN'],
+      deletedAt: null,
+      passwordHash: null,
+      emailVerified: false,
+    });
+    prismaMock.client.tenant.findUnique.mockResolvedValueOnce({
+      ...mockTenant,
+      ...payload,
+      id: 2,
+      slug: 'EX002',
+      users: [],
+      tenantAdmins: [
+        {
+          id: 10,
+          tenantId: 2,
+          userId: 20,
+          deletedAt: null,
+          user: {
+            id: 20,
+            email: 'admin@example.com',
+            name: 'Admin Name',
+            tenantId: 2,
+            tenantAdminId: 10,
+            roles: ['TENANT_ADMIN'],
+            deletedAt: null,
+            passwordHash: null,
+            emailVerified: false,
+          },
+        },
+      ],
+    } as TenantModel);
+
+    const result = await tenantService.createTenant(payload as any);
+
+    expect(result).toBeTruthy();
+    expect(prismaMock.client.tenant.count).toHaveBeenCalledWith({
+      where: {
+        slug: {
+          startsWith: 'EX',
+        },
+      },
+    });
+    expect(prismaMock.tenant.create).toHaveBeenCalledWith({
+      data: {
+        name: payload.name,
+        slug: 'EX002',
+        users: {
+          connectOrCreate: [],
+        },
+      },
+    });
+    expect(result.slug).toBe('EX002');
   });
 
   it('should delete a tenant', async () => {

@@ -18,6 +18,7 @@ export function InputField({ type, label, placeholder, className }: InputProps) 
       </label>
       <input
         id={label}
+        name={field.name}
         type={type}
         value={field.state.value}
         onChange={e => field.handleChange(e.target.value)}

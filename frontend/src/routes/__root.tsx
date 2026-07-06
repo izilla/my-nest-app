@@ -54,9 +54,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body className='flex flex-col bg-emerald-100 dark:bg-emerald-900 dark:text-white prose dark:prose-invert prose-zinc w-screen min-w-screen h-screen min-h-screen elms-sans-uumly'>
         <ThemeProvider defaultTheme='light' storageKey='uumly-ui-theme'>
           <QueryProvider>
-            <div className='flex flex-row justify-end gap-2 p-2 border-b border-emerald-300 dark:border-emerald-950 items-center'>
-              <LanguageSelector />
-              <ThemeToggle />
+            <div className='flex flex-row justify-between p-2 border-b border-emerald-300 dark:border-emerald-950 items-center'>
+              <div className='text-lg font-bold'>uumly</div>
+              <div className='flex'>
+                <LanguageSelector />
+                <ThemeToggle />
+              </div>
             </div>
 
             {children}

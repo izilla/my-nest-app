@@ -1,10 +1,14 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Res } from '@nestjs/common';
+import { AuthTokenService } from '../auth/auth-token.service';
 import { Tenant } from '../generated/prisma/browser';
 import { TenantsService } from './tenants.service';
 
 @Controller('tenants')
 export class TenantsController {
-  constructor(private readonly tenantService: TenantsService) {}
+  constructor(
+    private readonly tenantService: TenantsService,
+    private readonly authTokenService: AuthTokenService,
+  ) {}
 
   @Get()
   getTenants(): Promise<Tenant[]> {
@@ -17,15 +21,39 @@ export class TenantsController {
   }
 
   @Post()
-  createTenant(
+  async createTenant(
     @Body() tenantData: {
       name: string;
-      slug: string;
+      slug?: string;
       users: { email: string; name: string }[];
       tenantAdmins: { email: string; name: string }[];
     },
-  ): Promise<Tenant> {
-    return this.tenantService.createTenant(tenantData);
+    // biome-ignore lint/suspicious/noExplicitAny: NestJS Response object
+    @Res() res: any,
+  ): Promise<void> {
+    const newTenant = await this.tenantService.createTenant(tenantData);
+
+    // Get the first tenant admin user to generate auth token
+    // biome-ignore lint/suspicious/noExplicitAny: tenantAdmins structure from service includes user data
+    const tenantAdmin = newTenant.tenantAdmins?.[0] as any;
+    if (tenantAdmin?.user?.id) {
+      const authToken = this.authTokenService.sign({
+        sub: tenantAdmin.user.id,
+        roles: tenantAdmin.user.roles,
+        tenantId: String(newTenant.id),
+        isTenantAdmin: true,
+      });
+
+      // Set auth token as secure httpOnly cookie
+      res.cookie('auth_token', authToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      });
+    }
+
+    res.status(201).json(newTenant);
   }
 
   @Patch(':id')

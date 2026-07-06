@@ -29,7 +29,7 @@ export class UsersController {
 
   @AuthRoles(UserRole.TENANT_ADMIN)
   @Get()
-  async root(@Req() req: any): Promise<User[]> {
+  async root(@Req() req: { user: { tenantId: number } }): Promise<User[]> {
     const tenantId = req?.user?.tenantId;
 
     if (!tenantId) {

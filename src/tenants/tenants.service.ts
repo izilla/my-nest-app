@@ -63,22 +63,23 @@ export class TenantsService {
 
   async createTenant(data: {
     name: string;
-    slug: string;
+    slug?: string;
     users: { email: string; name: string }[];
     tenantAdmins: { email: string; name: string }[];
-  }): Promise<Tenant & { users: any[]; tenantAdmins: any[] }> {
+  }): Promise<Tenant & { users: { email: string; name: string }[]; tenantAdmins: any[] }> {
     let generatedSlug = data.slug;
     if (!generatedSlug) {
+      const slugPrefix = data.name.slice(0, 2).toUpperCase();
       const count = await this.prisma.client.tenant
         .count({
           where: {
-            name: {
-              startsWith: data.name?.slice(0, 2).toUpperCase(),
+            slug: {
+              startsWith: slugPrefix,
             },
           },
         })
         .then(count => count + 1);
-      generatedSlug = data.name?.slice(0, 2).toUpperCase() + count.toString().padStart(3, '0');
+      generatedSlug = slugPrefix + count.toString().padStart(3, '0');
     }
     const existingTenant = await this.prisma.client.tenant.findUnique({
       where: { slug: generatedSlug },
@@ -183,9 +184,13 @@ export class TenantsService {
       throw new NotFoundException('Tenant not found after creation');
     }
 
+    const users = dbTenant.users
+      .filter(user => user.tenantAdminId === null)
+      .map(user => ({ email: user.email, name: user.name ?? '' }));
+
     return {
       ...dbTenant,
-      users: dbTenant.users.filter(user => user.tenantAdminId === null),
+      users,
     };
   }
 

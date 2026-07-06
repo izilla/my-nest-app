@@ -41,6 +41,11 @@ i18n
             organization: 'Organization',
             greeting: 'Welcome to the onboarding process!',
           },
+          'verify-email': {
+            title: 'Verify Your Email',
+            message:
+              'A verification link has been sent to your email address. Please check your inbox and click the link to verify your email.',
+          },
         },
       },
       es: {
@@ -55,6 +60,11 @@ i18n
           onboarding: {
             organization: 'Organización',
             greeting: '¡Bienvenido al proceso de incorporación!',
+          },
+          'verify-email': {
+            title: 'Verifica tu correo electrónico',
+            message:
+              'Se ha enviado un enlace de verificación a tu dirección de correo electrónico. Por favor, revisa tu bandeja de entrada y haz clic en el enlace para verificar tu correo electrónico.',
           },
         },
       },

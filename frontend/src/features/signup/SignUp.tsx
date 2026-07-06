@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: TODO refactor */
 import { createFormHook } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -88,7 +89,11 @@ export const SignUp = () => {
           <form.AppField
             name='organization'
             children={field => (
-              <field.InputField type='text' label={t('onboarding.organization')} placeholder={t('organization')} />
+              <field.InputField
+                type='text'
+                label={t('onboarding.organization')}
+                placeholder={t('onboarding.organization')}
+              />
             )}
           />
           <form.AppField
@@ -101,7 +106,9 @@ export const SignUp = () => {
           />
           <form.AppField
             name='confirmPassword'
-            children={field => <field.InputField type='password' label='Confirm Password' placeholder='Confirm Password' />}
+            children={field => (
+              <field.InputField type='password' label='Confirm Password' placeholder='Confirm Password' />
+            )}
           />
           <form.Subscribe
             selector={state => [state.canSubmit, state.isSubmitting]}

@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: specs are long */
 import { Controller, Get, INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
