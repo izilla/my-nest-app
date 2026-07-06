@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/complexity/noExcessiveLinesPerFunction: specs are long */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 import { EmailVerificationService } from '../email/email-verification.service';
 import { UserRole } from '../generated/prisma/enums';
 import { UsersController } from './users.controller';
@@ -35,6 +36,10 @@ const MockAuthGuard = {
   canActivate: jest.fn().mockResolvedValue(true),
 };
 
+const MockRolesGuard = {
+  canActivate: jest.fn().mockReturnValue(true),
+};
+
 const mockUser = {
   id: 1,
   email: 'test@example.com',
@@ -67,6 +72,8 @@ describe('UsersController', () => {
     })
       .overrideGuard(AuthGuard)
       .useValue(MockAuthGuard)
+      .overrideGuard(RolesGuard)
+      .useValue(MockRolesGuard)
       .compile();
 
     controller = module.get<UsersController>(UsersController);
